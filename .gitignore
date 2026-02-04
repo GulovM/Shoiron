@@ -1,0 +1,23 @@
+# Env files
+.env
+.env.*
+!.env.example
+!backend/.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Django
+backend/media/
+
+# Node
+frontend/node_modules/
+frontend/.next/
+
+# OS
+.DS_Store
+Thumbs.db

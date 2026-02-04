@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --color-sand: 244 239 230;
+  --color-surface: 248 243 234;
+  --color-ink: 30 36 51;
+  --color-muted: 90 100 117;
+  --color-link: 47 127 122;
+  --color-accent: 122 46 46;
+  --color-gold: 194 162 77;
+  --color-border: 217 205 190;
+}
+
+.dark {
+  color-scheme: dark;
+  --color-sand: 20 24 33;
+  --color-surface: 28 34 48;
+  --color-ink: 230 225 216;
+  --color-muted: 154 163 178;
+  --color-link: 79 169 162;
+  --color-accent: 140 58 58;
+  --color-gold: 184 155 76;
+  --color-border: 52 60 76;
+}
+
+body {
+  @apply bg-sand text-ink;
+  font-family: var(--font-body), serif;
+  min-height: 100vh;
+  transition: background-color 220ms ease, color 220ms ease;
+}
+
+a,
+button,
+input,
+textarea,
+header,
+.card {
+  transition: background-color 220ms ease, color 220ms ease, border-color 220ms ease;
+}
+
+.container-shell {
+  @apply mx-auto max-w-6xl px-4;
+}
+
+.card {
+  @apply rounded-2xl border border-border/50 bg-surface/90 p-4 shadow-soft backdrop-blur;
+}
+
+.section-title {
+  @apply text-2xl font-semibold tracking-tight;
+}
+
+.emoji {
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  line-height: 1;
+}
