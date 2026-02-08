@@ -60,61 +60,82 @@ export default async function PoemPage({
 
   let neighbors: { prev: any; next: any } | null = null;
   if (cameFromAuthor) {
-    neighbors = await apiFetch(
-      `/api/v1/poems/${id}/neighbors?author_id=${searchParams.authorId}`,
-      { cache: 'no-store' }
-    );
+    neighbors = await apiFetch(`/api/v1/poems/${id}/neighbors?author_id=${searchParams.authorId}`, {
+      cache: 'no-store',
+    });
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="grid gap-8">
       <PoemViewTracker poemId={poem.id} />
-      <div className="flex flex-col gap-2">
+
+      <Link
+        href={cameFromAuthor ? `/authors/${withIdSlug(poem.author.id, poem.author.full_name, 'author')}` : '/'}
+        className="btn-secondary w-fit"
+      >
+        ← {cameFromAuthor ? 'К автору' : 'Назад'}
+      </Link>
+
+      <article className="card p-6 md:p-10">
         <Link
           href={`/authors/${withIdSlug(poem.author.id, poem.author.full_name, 'author')}`}
-          className="text-sm text-link"
+          className="mb-5 inline-flex w-fit items-center gap-3"
         >
-          {poem.author.full_name}
+          <span className="grid h-12 w-12 place-items-center rounded-full border-2 border-link/25 bg-link/10 font-semibold text-link">
+            {poem.author.full_name.slice(0, 1).toUpperCase()}
+          </span>
+          <span>
+            <span className="block text-xs text-muted">Автор</span>
+            <span className="font-semibold text-ink hover:text-link">{poem.author.full_name}</span>
+          </span>
         </Link>
-        <h1 className="text-3xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+
+        <h1
+          className="mb-6 text-4xl font-bold brand-gradient-text md:text-5xl"
+          style={{ fontFamily: 'var(--font-display)' }}
+        >
           {poem.title}
         </h1>
-      </div>
 
-      <article className="rounded-2xl border border-border/60 bg-surface/90 p-6 text-lg leading-relaxed shadow-soft">
-        <pre className="whitespace-pre-wrap">{poem.text}</pre>
+        <pre className="whitespace-pre-wrap text-lg italic leading-[1.9] text-ink/90">{poem.text}</pre>
+
+        {typeof poem.views === 'number' && (
+          <p className="mt-6 text-sm text-muted">{poem.views} просмотров</p>
+        )}
+
+        <div className="mt-8 border-t border-border pt-6">
+          <p className="mb-4 text-sm font-semibold text-ink">Реакции</p>
+          <ReactionBar
+            poemId={poem.id}
+            initialCounts={poem.reactions.counts_by_type}
+            initialFlags={poem.reactions.user_flags_by_type}
+          />
+        </div>
       </article>
 
-      <div className="flex flex-col gap-3">
-        <div className="text-sm uppercase tracking-wide text-gold">Реакции</div>
-        <ReactionBar
-          poemId={poem.id}
-          initialCounts={poem.reactions.counts_by_type}
-          initialFlags={poem.reactions.user_flags_by_type}
-        />
-      </div>
-
       {cameFromAuthor && neighbors ? (
-        <div className="flex flex-wrap gap-3">
+        <div className="grid gap-3 md:grid-cols-2">
           {neighbors.prev && (
             <Link
               href={`/poems/${neighbors.prev.url_slug}?from=author&authorId=${searchParams.authorId}`}
-              className="rounded-full border border-border/60 px-4 py-2 text-sm transition hover:border-border"
+              className="btn-secondary justify-start rounded-xl py-4"
             >
-              Ба шеъри гузашта
+              ← {neighbors.prev.title}
             </Link>
           )}
           {neighbors.next && (
             <Link
               href={`/poems/${neighbors.next.url_slug}?from=author&authorId=${searchParams.authorId}`}
-              className="rounded-full border border-border/60 px-4 py-2 text-sm transition hover:border-border"
+              className="btn-secondary justify-end rounded-xl py-4"
             >
-              Ба шеъри навбатии муаллиф
+              {neighbors.next.title} →
             </Link>
           )}
         </div>
       ) : (
-        <NextRandomButton label="К следующему рекомендуемому стиху" />
+        <div>
+          <NextRandomButton label="К следующему рекомендуемому стиху" />
+        </div>
       )}
     </div>
   );

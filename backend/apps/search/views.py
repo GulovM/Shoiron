@@ -38,18 +38,30 @@ class SearchView(APIView):
         raw_query = ' & '.join([f'{token}:*' for token in tokens])
         query = SearchQuery(raw_query, search_type='raw', config='simple')
 
-        authors_qs = Author.objects.annotate(
+        authors_qs = Author.objects.filter(deleted_at__isnull=True, is_published=True).annotate(
             rank=SearchRank(F('search_vector'), query),
             similarity=TrigramSimilarity('full_name', q),
-            poems_count=Count('poems', distinct=True),
-            popularity=Coalesce(Sum('poems__views'), 0),
+            poems_count=Count(
+                'poems',
+                filter=Q(poems__deleted_at__isnull=True, poems__is_published=True),
+                distinct=True,
+            ),
+            popularity=Coalesce(
+                Sum('poems__views', filter=Q(poems__deleted_at__isnull=True, poems__is_published=True)),
+                0,
+            ),
         ).filter(
             Q(search_vector=query)
             | Q(full_name__icontains=q)
             | Q(full_name__trigram_similar=q)
         ).order_by('-rank', '-similarity', '-popularity')
 
-        poems_qs = Poem.objects.select_related('author').annotate(
+        poems_qs = Poem.objects.filter(
+            deleted_at__isnull=True,
+            is_published=True,
+            author__deleted_at__isnull=True,
+            author__is_published=True,
+        ).select_related('author').annotate(
             rank=SearchRank(F('search_vector'), query),
             similarity=Greatest(TrigramSimilarity('title', q), TrigramSimilarity('text', q)),
         ).filter(

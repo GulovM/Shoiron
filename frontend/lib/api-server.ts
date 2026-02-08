@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 
-type FetchOptions = RequestInit & { revalidate?: number };
+type FetchOptions = RequestInit & { revalidate?: number | false };
 
 export function getApiBase(): string {
   return process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -17,13 +17,16 @@ export async function apiFetch(path: string, options: FetchOptions = {}) {
     headers.set('cookie', cookie);
   }
 
-  const init: RequestInit & { next?: { revalidate?: number } } = {
+  const init: RequestInit & { next?: { revalidate?: number | false; tags?: string[] } } = {
     ...options,
     headers,
   };
 
   if (options.revalidate !== undefined) {
-    init.next = { revalidate: options.revalidate };
+    init.next = {
+      ...(options.next || {}),
+      revalidate: options.revalidate,
+    };
   }
 
   const res = await fetch(url, init);

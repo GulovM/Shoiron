@@ -1,6 +1,8 @@
+from datetime import date
+
 from django.core.cache import cache
 from django.db import IntegrityError, transaction
-from django.db.models import Count, F, Sum
+from django.db.models import Count, F, Q, Sum
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -13,7 +15,7 @@ from config.utils import get_user_hash
 from apps.authors.models import Author
 from apps.authors.serializers import AuthorSerializer
 from apps.reactions.utils import get_reaction_counts, get_user_flags
-from .models import Poem, PoemView
+from .models import Poem, PoemMonthlyVisit, PoemView
 from .serializers import PoemDetailSerializer, PoemListSerializer
 
 
@@ -28,8 +30,13 @@ class HealthView(APIView):
 class StatsView(APIView):
     def get(self, request):
         return Response({
-            'authors_count': Author.objects.count(),
-            'poems_count': Poem.objects.count(),
+            'authors_count': Author.objects.filter(deleted_at__isnull=True, is_published=True).count(),
+            'poems_count': Poem.objects.filter(
+                deleted_at__isnull=True,
+                is_published=True,
+                author__deleted_at__isnull=True,
+                author__is_published=True,
+            ).count(),
         })
 
 
@@ -39,17 +46,34 @@ class HomeView(APIView):
         if cached:
             return Response(cached)
 
-        top_poems = Poem.objects.select_related('author').order_by('-views')[:5]
-        top_authors = Author.objects.annotate(
-            poems_count=Count('poems', distinct=True),
-            popularity=Coalesce(Sum('poems__views'), 0),
+        top_poems = Poem.objects.filter(
+            deleted_at__isnull=True,
+            is_published=True,
+            author__deleted_at__isnull=True,
+            author__is_published=True,
+        ).select_related('author').order_by('-views')[:5]
+        top_authors = Author.objects.filter(deleted_at__isnull=True, is_published=True).annotate(
+            poems_count=Count(
+                'poems',
+                filter=Q(poems__deleted_at__isnull=True, poems__is_published=True),
+                distinct=True,
+            ),
+            popularity=Coalesce(
+                Sum('poems__views', filter=Q(poems__deleted_at__isnull=True, poems__is_published=True)),
+                0,
+            ),
         ).order_by('-popularity')[:5]
 
         payload = {
             'hero_text': HERO_TEXT,
             'stats': {
-                'authors_count': Author.objects.count(),
-                'poems_count': Poem.objects.count(),
+                'authors_count': Author.objects.filter(deleted_at__isnull=True, is_published=True).count(),
+                'poems_count': Poem.objects.filter(
+                    deleted_at__isnull=True,
+                    is_published=True,
+                    author__deleted_at__isnull=True,
+                    author__is_published=True,
+                ).count(),
             },
             'top_poems': PoemListSerializer(top_poems, many=True, context={'request': request}).data,
             'top_authors': AuthorSerializer(top_authors, many=True, context={'request': request}).data,
@@ -60,7 +84,12 @@ class HomeView(APIView):
 
 class HomeRecommendationView(APIView):
     def get(self, request):
-        poem = Poem.objects.select_related('author').order_by('?').first()
+        poem = Poem.objects.filter(
+            deleted_at__isnull=True,
+            is_published=True,
+            author__deleted_at__isnull=True,
+            author__is_published=True,
+        ).select_related('author').order_by('?').first()
         if not poem:
             return Response({'detail': 'No poems'}, status=404)
         return Response(PoemListSerializer(poem, context={'request': request}).data)
@@ -68,7 +97,12 @@ class HomeRecommendationView(APIView):
 
 class PoemRandomView(APIView):
     def get(self, request):
-        poem = Poem.objects.select_related('author').order_by('?').first()
+        poem = Poem.objects.filter(
+            deleted_at__isnull=True,
+            is_published=True,
+            author__deleted_at__isnull=True,
+            author__is_published=True,
+        ).select_related('author').order_by('?').first()
         if not poem:
             return Response({'detail': 'No poems'}, status=404)
         return Response(PoemListSerializer(poem, context={'request': request}).data)
@@ -76,7 +110,12 @@ class PoemRandomView(APIView):
 
 class PoemDetailView(RetrieveAPIView):
     serializer_class = PoemDetailSerializer
-    queryset = Poem.objects.select_related('author')
+    queryset = Poem.objects.filter(
+        deleted_at__isnull=True,
+        is_published=True,
+        author__deleted_at__isnull=True,
+        author__is_published=True,
+    ).select_related('author')
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -93,9 +132,17 @@ class PoemViewRegister(APIView):
     throttle_classes = [ViewRateThrottle]
 
     def post(self, request, pk):
-        poem = get_object_or_404(Poem, pk=pk)
+        poem = get_object_or_404(
+            Poem,
+            pk=pk,
+            deleted_at__isnull=True,
+            is_published=True,
+            author__deleted_at__isnull=True,
+            author__is_published=True,
+        )
         user_hash = get_user_hash(request)
         today = timezone.now().date()
+        month_start = date(today.year, today.month, 1)
 
         created = False
         with transaction.atomic():
@@ -107,6 +154,8 @@ class PoemViewRegister(APIView):
 
             if created:
                 Poem.objects.filter(pk=poem.pk).update(views=F('views') + 1)
+                monthly, _ = PoemMonthlyVisit.objects.get_or_create(poem=poem, month_start=month_start)
+                PoemMonthlyVisit.objects.filter(pk=monthly.pk).update(visits_count=F('visits_count') + 1)
 
         poem.refresh_from_db(fields=['views'])
         return Response({'views': poem.views, 'counted': created})
@@ -117,10 +166,17 @@ class PoemNeighborsView(APIView):
         author_id = request.query_params.get('author_id')
         if not author_id:
             return Response({'detail': 'author_id required'}, status=400)
-        get_object_or_404(Author, pk=author_id)
+        get_object_or_404(Author, pk=author_id, deleted_at__isnull=True, is_published=True)
 
-        prev_poem = Poem.objects.filter(author_id=author_id, id__lt=pk).order_by('-id').first()
-        next_poem = Poem.objects.filter(author_id=author_id, id__gt=pk).order_by('id').first()
+        visible_filters = {
+            'author_id': author_id,
+            'deleted_at__isnull': True,
+            'is_published': True,
+            'author__deleted_at__isnull': True,
+            'author__is_published': True,
+        }
+        prev_poem = Poem.objects.filter(**visible_filters, id__lt=pk).order_by('-id').first()
+        next_poem = Poem.objects.filter(**visible_filters, id__gt=pk).order_by('id').first()
 
         def minimal(poem):
             if not poem:

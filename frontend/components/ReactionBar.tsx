@@ -5,11 +5,11 @@ import { useState } from 'react';
 import { getApiBase } from '../lib/api-client';
 
 const TYPES = [
-  { key: 'heart', label: '?' },
-  { key: 'fire', label: '??' },
-  { key: 'like', label: '??' },
-  { key: 'sad', label: '??' },
-  { key: 'star', label: '?' },
+  { key: 'heart', label: '❤', activeClass: 'text-red-500 border-red-300 bg-red-50 dark:bg-red-950/30' },
+  { key: 'fire', label: '🔥', activeClass: 'text-orange-500 border-orange-300 bg-orange-50 dark:bg-orange-950/30' },
+  { key: 'like', label: '👍', activeClass: 'text-blue-500 border-blue-300 bg-blue-50 dark:bg-blue-950/30' },
+  { key: 'sad', label: '🥀', activeClass: 'text-violet-500 border-violet-300 bg-violet-50 dark:bg-violet-950/30' },
+  { key: 'star', label: '★', activeClass: 'text-yellow-500 border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30' },
 ];
 
 export type ReactionCounts = Record<string, number>;
@@ -56,14 +56,14 @@ export function ReactionBar({
             type="button"
             onClick={() => toggle(type.key)}
             disabled={loading === type.key}
-            className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm transition ${
+            className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm transition ${
               active
-                ? 'border-accent bg-accent/15 text-accent'
-                : 'border-border/60 text-muted hover:border-border'
+                ? type.activeClass
+                : 'border-border text-muted hover:border-link/40 hover:text-link'
             }`}
           >
             <span className="text-base emoji">{type.label}</span>
-            <span>{counts[type.key] ?? 0}</span>
+            <span className="font-medium">{counts[type.key] ?? 0}</span>
           </button>
         );
       })}

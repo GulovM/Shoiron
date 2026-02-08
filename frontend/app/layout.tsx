@@ -19,7 +19,7 @@ const bodyFont = Source_Serif_4({
 
 export const metadata: Metadata = {
   title: 'Шоирон — портал стихотворений',
-  description: 'Публичный портал для чтения, поиска и сохранения поэзии форсу-таджикских авторов.',
+  description: 'Публичный портал для чтения, поиска и сохранения поэзии.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
 };
 
@@ -32,8 +32,10 @@ export default function RootLayout({
     <html lang="ru" className={`${displayFont.variable} ${bodyFont.variable}`} suppressHydrationWarning>
       <body>
         <ThemeProvider>
-          <Header />
-          <main className="container-shell py-10">{children}</main>
+          <div className="relative isolate">
+            <Header />
+            <main className="container-shell pb-16 pt-8 md:pt-10">{children}</main>
+          </div>
         </ThemeProvider>
       </body>
     </html>

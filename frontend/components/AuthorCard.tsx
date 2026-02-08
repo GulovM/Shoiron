@@ -19,29 +19,46 @@ function formatDates(birth?: string | null, death?: string | null) {
   return `${birth || '—'} — ${death || '—'}`;
 }
 
+function getInitials(fullName: string) {
+  return fullName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
+}
+
 export function AuthorCard({ author }: { author: AuthorCardData }) {
   const slug = author.url_slug || withIdSlug(author.id, author.full_name, 'author');
+  const dates = formatDates(author.birth_date, author.death_date);
+  const initials = getInitials(author.full_name) || 'SH';
+
   return (
-    <Link href={`/authors/${slug}`} className="card flex items-center gap-4 transition hover:-translate-y-1">
-      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-border/60">
+    <Link
+      href={`/authors/${slug}`}
+      className="card group flex items-center gap-4 p-4 hover:-translate-y-1"
+    >
+      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-link/25">
         {author.photo_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={author.photo_url} alt={author.full_name} className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gold/15 text-xs uppercase tracking-wide text-muted">
-            SH
+          <div className="flex h-full w-full items-center justify-center bg-link/10 text-sm font-semibold uppercase text-link">
+            {initials}
           </div>
         )}
       </div>
-      <div className="flex flex-col gap-1">
-        <div className="text-base font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+
+      <div className="min-w-0 flex-1">
+        <h3
+          className="truncate text-lg font-semibold text-ink group-hover:text-link"
+          style={{ fontFamily: 'var(--font-display)' }}
+        >
           {author.full_name}
-        </div>
-        {formatDates(author.birth_date, author.death_date) && (
-          <div className="text-xs opacity-60">{formatDates(author.birth_date, author.death_date)}</div>
-        )}
+        </h3>
+        {dates && <p className="text-xs text-muted">{dates}</p>}
         {typeof author.poems_count === 'number' && (
-          <div className="text-xs opacity-70">Стихов: {author.poems_count}</div>
+          <p className="text-xs text-muted">{author.poems_count} стихотворений</p>
         )}
       </div>
     </Link>

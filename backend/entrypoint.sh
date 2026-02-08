@@ -10,6 +10,10 @@ if [ "${SEED_DEMO}" = "1" ]; then
   python manage.py seed_demo
 fi
 
+if [ "${SEED_DASHBOARD:-1}" = "1" ]; then
+  python manage.py seed_dashboard
+fi
+
 if [ -n "${DJANGO_SUPERUSER_USERNAME}" ] && [ -n "${DJANGO_SUPERUSER_PASSWORD}" ]; then
   python manage.py bootstrap_admin
 fi

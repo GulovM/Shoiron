@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.db import models
@@ -11,6 +12,15 @@ class Poem(models.Model):
     title = models.CharField(max_length=255, db_index=True)
     text = models.TextField()
     views = models.PositiveIntegerField(default=0, db_index=True)
+    is_published = models.BooleanField(default=True, db_index=True)
+    deleted_at = models.DateTimeField(blank=True, null=True, db_index=True)
+    deleted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='deleted_poems',
+    )
     search_vector = SearchVectorField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -47,3 +57,19 @@ class PoemView(models.Model):
         if not self.viewed_date:
             self.viewed_date = timezone.now().date()
         super().save(*args, **kwargs)
+
+
+class PoemMonthlyVisit(models.Model):
+    poem = models.ForeignKey(Poem, related_name='monthly_visits', on_delete=models.CASCADE)
+    month_start = models.DateField(db_index=True)
+    visits_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['poem', 'month_start'], name='uniq_poem_monthly_visit')
+        ]
+        indexes = [
+            models.Index(fields=['month_start', '-visits_count'], name='poem_month_visits_idx'),
+        ]

@@ -23,21 +23,21 @@ export function PaginationLinks({
   };
 
   return (
-    <div className="flex items-center gap-3 text-sm">
+    <div className="mt-6 flex items-center justify-center gap-2">
       <Link
         href={buildUrl(Math.max(1, page - 1))}
-        className={`rounded-full border border-border/60 px-3 py-1 ${page === 1 ? 'pointer-events-none opacity-40' : ''}`}
+        className={`btn-secondary ${page === 1 ? 'pointer-events-none opacity-45' : ''}`}
       >
-        Назад
+        Предыдущая
       </Link>
-      <div>
+      <span className="px-2 text-sm text-muted">
         Страница {page} из {totalPages}
-      </div>
+      </span>
       <Link
         href={buildUrl(Math.min(totalPages, page + 1))}
-        className={`rounded-full border border-border/60 px-3 py-1 ${page === totalPages ? 'pointer-events-none opacity-40' : ''}`}
+        className={`btn-secondary ${page === totalPages ? 'pointer-events-none opacity-45' : ''}`}
       >
-        Далее
+        Следующая
       </Link>
     </div>
   );

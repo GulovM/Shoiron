@@ -21,21 +21,16 @@ export function AuthorsSearch() {
         next.set('page', '1');
         router.push(`/authors?${next.toString()}`);
       }}
-      className="flex flex-wrap gap-2"
+      className="relative w-full"
     >
+      <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base text-muted">⌕</span>
       <input
         type="search"
-        placeholder="Поиск по имени автора"
+        placeholder="Поиск автора по имени..."
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        className="w-64 rounded-full border border-border/60 bg-surface/80 px-3 py-1 text-sm text-ink outline-none placeholder:text-muted focus:border-link/70"
+        className="input-shell h-14 pl-10 text-base"
       />
-      <button
-        type="submit"
-        className="rounded-full border border-border/60 px-3 py-1 text-sm transition hover:border-border"
-      >
-        Найти
-      </button>
     </form>
   );
 }

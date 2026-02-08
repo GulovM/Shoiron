@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'apps.poems',
     'apps.reactions',
     'apps.search',
+    'apps.dashboard',
 ]
 
 MIDDLEWARE = [
@@ -86,13 +87,38 @@ PUBLIC_BASE_URL = os.environ.get('DJANGO_PUBLIC_BASE_URL', '')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOWED_ORIGINS = [
-    o.strip() for o in os.environ.get('DJANGO_CORS_ALLOWED_ORIGINS', 'http://localhost:3000').split(',') if o.strip()
-]
+PUBLIC_ORIGIN = os.environ.get('PUBLIC_ORIGIN', 'http://localhost:3000')
+ADMIN_ORIGIN = os.environ.get('ADMIN_ORIGIN', 'http://localhost:3001')
+
+CORS_ALLOWED_ORIGINS = sorted(
+    {
+        *[
+            o.strip()
+            for o in os.environ.get(
+                'DJANGO_CORS_ALLOWED_ORIGINS',
+                f'{PUBLIC_ORIGIN},{ADMIN_ORIGIN}',
+            ).split(',')
+            if o.strip()
+        ],
+        PUBLIC_ORIGIN,
+        ADMIN_ORIGIN,
+    }
+)
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = [
-    o.strip() for o in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', 'http://localhost:3000').split(',') if o.strip()
-]
+CSRF_TRUSTED_ORIGINS = sorted(
+    {
+        *[
+            o.strip()
+            for o in os.environ.get(
+                'DJANGO_CSRF_TRUSTED_ORIGINS',
+                f'{PUBLIC_ORIGIN},{ADMIN_ORIGIN}',
+            ).split(',')
+            if o.strip()
+        ],
+        PUBLIC_ORIGIN,
+        ADMIN_ORIGIN,
+    }
+)
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
@@ -127,3 +153,13 @@ CACHES = {
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SESSION_COOKIE_SECURE = os.environ.get('DJANGO_SESSION_COOKIE_SECURE', '0') == '1'
 CSRF_COOKIE_SECURE = os.environ.get('DJANGO_CSRF_COOKIE_SECURE', '0') == '1'
+
+DASHBOARD_TEMP_PASSWORD_TTL_MINUTES = int(os.environ.get('DASHBOARD_TEMP_PASSWORD_TTL_MINUTES', '60'))
+
+EMAIL_BACKEND = os.environ.get('DJANGO_EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = os.environ.get('DJANGO_EMAIL_HOST', 'localhost')
+EMAIL_PORT = int(os.environ.get('DJANGO_EMAIL_PORT', '25'))
+EMAIL_HOST_USER = os.environ.get('DJANGO_EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('DJANGO_EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.environ.get('DJANGO_EMAIL_USE_TLS', '0') == '1'
+DEFAULT_FROM_EMAIL = os.environ.get('DJANGO_DEFAULT_FROM_EMAIL', 'noreply@shoiron.local')

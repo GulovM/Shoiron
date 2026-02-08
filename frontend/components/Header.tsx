@@ -1,62 +1,121 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { ThemeToggle } from './ThemeToggle';
 
+const NAV_ITEMS = [
+  { href: '/', label: 'Главная' },
+  { href: '/authors', label: 'Авторы' },
+  { href: '/about', label: 'О проекте' },
+  { href: '/contacts', label: 'Контакты' },
+  { href: '/support', label: 'Поддержать проект' },
+];
+
 export function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const [query, setQuery] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!query.trim()) return;
+    router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+    setMobileMenuOpen(false);
+  };
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border/60 bg-sand/90 backdrop-blur">
-      <div className="container-shell flex flex-wrap items-center justify-between gap-4 py-4">
-        <Link href="/" className="text-xl font-semibold tracking-tight">
-          Шоирон
-        </Link>
-        <nav className="flex flex-wrap items-center gap-4 text-sm">
-          <Link href="/" className="text-ink hover:text-link">
-            Главная
+    <header className="sticky top-0 z-40 border-b border-border/80 bg-surface/85 backdrop-blur-md">
+      <div className="container-shell py-4">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="text-3xl font-bold leading-none brand-gradient-text"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            Шоирон
           </Link>
-          <Link href="/authors" className="text-ink hover:text-link">
-            Авторы
-          </Link>
-          <Link href="/about" className="text-ink hover:text-link">
-            О проекте
-          </Link>
-          <Link href="/contacts" className="text-ink hover:text-link">
-            Контакты
-          </Link>
-          <Link href="/support" className="text-accent hover:text-gold">
-            Поддержать проект
-          </Link>
-        </nav>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (query.trim()) {
-              router.push(`/search?q=${encodeURIComponent(query.trim())}`);
-            }
-          }}
-          className="flex items-center gap-2"
-        >
+
+          <form onSubmit={handleSubmit} className="relative ml-auto hidden flex-1 md:block md:max-w-md">
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted">⌕</span>
+            <input
+              type="search"
+              placeholder="Поиск по авторам и стихам..."
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              className="input-shell pl-10"
+            />
+          </form>
+
+          <nav className="hidden items-center gap-4 lg:flex">
+            {NAV_ITEMS.map((item) => {
+              const isActive =
+                item.href === '/'
+                  ? pathname === '/'
+                  : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`text-sm ${
+                    isActive ? 'text-link font-semibold' : 'text-ink/80 hover:text-link'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <ThemeToggle />
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((value) => !value)}
+            className="btn-secondary px-3 lg:hidden"
+            aria-label="Открыть меню"
+          >
+            {mobileMenuOpen ? '✕' : '☰'}
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="relative mt-4 md:hidden">
+          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted">⌕</span>
           <input
             type="search"
-            placeholder="Поиск стихов и авторов"
-            className="w-52 rounded-full border border-border/60 bg-surface/80 px-3 py-1 text-sm text-ink outline-none placeholder:text-muted focus:border-link/70"
+            placeholder="Поиск..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            className="input-shell pl-10"
           />
-          <button
-            type="submit"
-            className="rounded-full border border-border/60 px-3 py-1 text-sm transition hover:border-border"
-          >
-            Найти
-          </button>
-          <ThemeToggle />
         </form>
+
+        {mobileMenuOpen && (
+          <nav className="mt-4 grid gap-1 border-t border-border pt-3 lg:hidden">
+            {NAV_ITEMS.map((item) => {
+              const isActive =
+                item.href === '/'
+                  ? pathname === '/'
+                  : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`rounded-lg px-2 py-2 text-sm ${
+                    isActive ? 'bg-link/10 text-link' : 'text-ink/80 hover:bg-black/5 dark:hover:bg-white/5'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
       </div>
     </header>
   );

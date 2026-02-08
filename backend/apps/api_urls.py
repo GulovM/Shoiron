@@ -5,4 +5,5 @@ urlpatterns = [
     path('', include('apps.poems.urls')),
     path('', include('apps.reactions.urls')),
     path('', include('apps.search.urls')),
+    path('', include('apps.dashboard.urls')),
 ]

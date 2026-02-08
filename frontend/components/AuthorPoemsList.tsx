@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { getApiBase } from '../lib/api-client';
@@ -32,39 +33,45 @@ export function AuthorPoemsList({ authorId, initial }: { authorId: number; initi
   }, [authorId, page, data.page, data.page_size]);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid gap-3">
-        {data.results.map((poem) => (
-          <a
-            key={poem.id}
-            href={`/poems/${withIdSlug(poem.id, poem.title, 'poem')}?from=author&authorId=${authorId}`}
-            className="rounded-xl border border-border/60 px-4 py-3 text-sm transition hover:border-border"
-          >
-            <div className="font-semibold">{poem.title}</div>
-            <div className="text-xs opacity-60">Просмотров: {poem.views}</div>
-          </a>
-        ))}
-      </div>
+    <div className="grid gap-4">
+      {data.results.map((poem) => (
+        <Link
+          key={poem.id}
+          href={`/poems/${withIdSlug(poem.id, poem.title, 'poem')}?from=author&authorId=${authorId}`}
+          className="rounded-xl border border-border bg-surface p-4 transition hover:border-link/40 hover:bg-black/[0.02] dark:hover:bg-white/[0.03]"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h3 className="truncate font-semibold text-ink">{poem.title}</h3>
+              <p className="text-sm text-muted">{poem.views} просмотров</p>
+            </div>
+            <span className="text-muted" aria-hidden>
+              →
+            </span>
+          </div>
+        </Link>
+      ))}
+
       {totalPages > 1 && (
-        <div className="flex items-center gap-2 text-sm">
+        <div className="mt-3 flex items-center justify-center gap-2 text-sm">
           <button
             type="button"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="rounded-full border border-border/60 px-3 py-1 disabled:opacity-40"
+            className="btn-secondary disabled:opacity-45"
           >
-            Назад
+            Предыдущая
           </button>
-          <div>
+          <span className="text-muted">
             Страница {page} из {totalPages}
-          </div>
+          </span>
           <button
             type="button"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="rounded-full border border-border/60 px-3 py-1 disabled:opacity-40"
+            className="btn-secondary disabled:opacity-45"
           >
-            Далее
+            Следующая
           </button>
         </div>
       )}

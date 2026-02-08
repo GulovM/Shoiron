@@ -20,7 +20,14 @@ class ReactionToggleView(APIView):
         reaction_type = serializer.validated_data['type']
         user_hash = get_user_hash(request)
 
-        get_object_or_404(Poem, pk=poem_id)
+        get_object_or_404(
+            Poem,
+            pk=poem_id,
+            deleted_at__isnull=True,
+            is_published=True,
+            author__deleted_at__isnull=True,
+            author__is_published=True,
+        )
 
         existing = Reaction.objects.filter(
             poem_id=poem_id,
